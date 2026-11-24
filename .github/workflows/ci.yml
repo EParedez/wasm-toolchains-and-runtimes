@@ -1,0 +1,29 @@
+name: Validate WASI example
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: 0.13.0
+      - uses: bytecodealliance/actions/wasmtime/setup@v1
+        with:
+          version: "50.0.0"
+      - name: Show tool versions
+        run: |
+          zig version
+          wasmtime --version
+      - name: Compile WASI module
+        run: zig build-exe processor.zig -target wasm32-wasi -O ReleaseSmall
+      - name: Run integration tests
+        run: python3 tests/integration.py
