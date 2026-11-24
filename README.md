@@ -28,7 +28,7 @@ to uppercase in the same buffer, and writes the result. The processing code
 does not request dynamic memory. The buffer is part of the module's linear
 memory; it does **not** cap either runtime's total memory use.
 
-Build the module with Zig 0.13.0:
+Build the module with Zig 0.13.0. Later Zig releases changed the standard library I/O API, so other versions may need code changes:
 
 ```sh
 zig build-exe zig-wasi/processor.zig -target wasm32-wasi -O ReleaseSmall -femit-bin=zig-wasi/processor.wasm
@@ -58,7 +58,7 @@ python3 zig-wasi/tests/integration.py --runtime wasmedge --module zig-wasi/proce
 Expected output for either runtime's `printf` command:
 
 ```text
-Processed 39 bytes in fixed memory:
+Processed 39 bytes with a fixed-size buffer:
 {"EVENT": "USER_LOGIN", "STATUS": "OK"}
 ```
 
