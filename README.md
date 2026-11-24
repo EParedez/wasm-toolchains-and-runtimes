@@ -1,21 +1,21 @@
-# Zig + Wasmtime: memoria acotada en WASI
+# Zig + Wasmtime: bounded memory with WASI
 
-Ejemplo reproducible para el caso práctico del artículo sobre WebAssembly. Lee
-hasta 32 KiB de la entrada estándar, convierte letras ASCII a mayúsculas en el
-mismo búfer y escribe el resultado. La lógica de procesamiento no solicita
-memoria dinámica; el búfer de 32 KiB forma parte de la memoria lineal del módulo.
-Esto **no** fija la memoria total que utiliza Wasmtime.
+A reproducible example for a WebAssembly article. It reads up to 32 KiB from
+standard input, converts ASCII letters to uppercase in the same buffer, and
+writes the result. The processing code does not request dynamic memory; the
+32 KiB buffer is part of the module's linear memory. This does **not** cap
+Wasmtime's total memory use.
 
-## Versiones
+## Versions
 
 - Zig 0.13.0
 - Wasmtime 50.0.0
 - WASI Preview 1 (`wasm32-wasi`)
 
-Las versiones están fijadas en el workflow de GitHub Actions. El tamaño del
-binario se informa en cada ejecución de CI; no se supone un tamaño fijo.
+These versions are pinned in the GitHub Actions workflow. Each CI run reports
+the generated binary's actual size; this project does not assume a fixed size.
 
-## Compilar y ejecutar
+## Build and run
 
 ```sh
 zig build-exe processor.zig -target wasm32-wasi -O ReleaseSmall
@@ -23,25 +23,25 @@ printf '%s' '{"event": "user_login", "status": "ok"}' | wasmtime run -C cache=n 
 python3 tests/integration.py
 ```
 
-Salida esperada para el `printf` anterior:
+Expected output for the `printf` command above:
 
 ```text
-Procesados 39 bytes en memoria fija:
+Processed 39 bytes in fixed memory:
 {"EVENT": "USER_LOGIN", "STATUS": "OK"}
 ```
 
-El límite incluye cualquier salto de línea recibido por `stdin`. Una entrada
-de 32,768 bytes se acepta; una de 32,769 bytes se rechaza con `StreamTooLong`.
-La transformación es ASCII: no modifica caracteres Unicode fuera de ASCII.
+The limit includes any newline read from `stdin`. An input of 32,768 bytes is
+accepted; 32,769 bytes is rejected with `StreamTooLong`. The transformation
+only affects ASCII letters and does not change non-ASCII Unicode characters.
 
-## Qué comprueba CI
+## What CI checks
 
-- Compilación del módulo con la versión fijada de Zig.
-- Ejecución en la versión fijada de Wasmtime.
-- Salida para entrada vacía y un payload JSON.
-- Comportamiento en el límite y un byte por encima.
-- Tamaño real del archivo `.wasm` generado.
+- Compilation with the pinned Zig version.
+- Execution with the pinned Wasmtime version.
+- Output for empty input and a JSON payload.
+- Behavior at the limit and one byte beyond it.
+- The generated `.wasm` file's actual size.
 
-El workflow no pretende medir latencia, memoria residente ni densidad de
-instancias. Esas métricas requieren un benchmark separado con entorno y carga
-documentados.
+The workflow does not measure latency, resident memory, or instance density.
+Those metrics require a separate benchmark with a documented environment and
+workload.

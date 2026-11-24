@@ -21,7 +21,7 @@ def run(payload: bytes) -> subprocess.CompletedProcess[bytes]:
 def expect_success(payload: bytes, transformed: bytes) -> None:
     result = run(payload)
     expected = (
-        f"Procesados {len(payload)} bytes en memoria fija:\n".encode()
+        f"Processed {len(payload)} bytes in fixed memory:\n".encode()
         + transformed
         + b"\n"
     )

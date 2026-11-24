@@ -21,7 +21,7 @@ pub fn main() !void {
         byte.* = std.ascii.toUpper(byte.*);
     }
 
-    try stdout.print("Procesados {d} bytes en memoria fija:\n{s}\n", .{
+    try stdout.print("Processed {d} bytes in fixed memory:\n{s}\n", .{
         len,
         input[0..len],
     });
