@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 jobs:
-  test:
+  wasmtime:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -27,3 +27,54 @@ jobs:
         run: zig build-exe processor.zig -target wasm32-wasi -O ReleaseSmall
       - name: Run integration tests
         run: python3 tests/integration.py
+
+  wasmedge:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: 0.13.0
+      - name: Install pinned WasmEdge release
+        run: |
+          archive="$RUNNER_TEMP/wasmedge.tar.xz"
+          url="https://github.com/WasmEdge/WasmEdge/releases/download/0.18.1/WasmEdge-0.18.1-manylinux_2_28_x86_64.tar.xz"
+          curl --fail --location --retry 3 "$url" --output "$archive"
+          echo "f1883eebd023bec656125659142bd4edfe930d67faf79eeb17c6692dc2a632fd  $archive" | sha256sum --check
+          mkdir -p "$RUNNER_TEMP/wasmedge"
+          tar -xf "$archive" -C "$RUNNER_TEMP/wasmedge"
+          echo "$RUNNER_TEMP/wasmedge/bin" >> "$GITHUB_PATH"
+          echo "LD_LIBRARY_PATH=$RUNNER_TEMP/wasmedge/lib64" >> "$GITHUB_ENV"
+      - name: Compile WASI module
+        run: zig build-exe processor.zig -target wasm32-wasi -O ReleaseSmall
+      - name: Test WasmEdge interpreter
+        run: |
+          wasmedge --version
+          python3 tests/integration.py --runtime wasmedge
+      - name: Compile and test WasmEdge AOT artifact
+        run: |
+          wasmedge compile processor.wasm processor-aot.wasm
+          python3 tests/integration.py --runtime wasmedge --module processor-aot.wasm --aot
+
+  emscripten:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: emscripten-core/setup-emsdk@v15
+        with:
+          version: "6.0.13"
+      - name: Build C module for browser and Node.js
+        run: |
+          emcc emscripten/batch.c -O2 \
+            -sMODULARIZE=1 \
+            -sENVIRONMENT=web,node \
+            -sEXPORT_NAME=createBatchModule \
+            -sEXPORTED_FUNCTIONS=_uppercase_ascii,_malloc,_free \
+            -sEXPORTED_RUNTIME_METHODS=HEAPU8 \
+            -sALLOW_MEMORY_GROWTH=1 \
+            -o emscripten/batch.js
+      - name: Test JavaScript to Wasm batch calls
+        run: |
+          emcc --version
+          node --version
+          node emscripten/test-batch.cjs

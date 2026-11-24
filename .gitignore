@@ -4,4 +4,7 @@ processor
 processor.o
 processor.wasm
 processor.wasm.o
+processor-aot.wasm
+emscripten/batch.js
+emscripten/batch.wasm
 __pycache__/

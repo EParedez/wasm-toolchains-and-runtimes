@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Emscripten batch processing demo</title>
+  </head>
+  <body>
+    <h1>One JavaScript → Wasm call per batch</h1>
+    <label for="input">Text to convert</label>
+    <input id="input" value="hello from the browser" />
+    <button id="convert" disabled>Loading Wasm…</button>
+    <output id="result" aria-live="polite"></output>
+
+    <script src="batch.js"></script>
+    <script>
+      createBatchModule().then((module) => {
+        const button = document.getElementById('convert');
+        const input = document.getElementById('input');
+        const result = document.getElementById('result');
+        const encoder = new TextEncoder();
+        const decoder = new TextDecoder();
+        button.disabled = false;
+        button.textContent = 'Convert';
+        button.addEventListener('click', () => {
+          const bytes = encoder.encode(input.value);
+          if (bytes.length === 0) {
+            result.value = '';
+            return;
+          }
+          const pointer = module._malloc(bytes.length);
+          if (pointer === 0) {
+            result.value = 'Wasm allocation failed';
+            return;
+          }
+          try {
+            module.HEAPU8.set(bytes, pointer);
+            module._uppercase_ascii(pointer, bytes.length);
+            result.value = decoder.decode(
+              module.HEAPU8.subarray(pointer, pointer + bytes.length)
+            );
+          } finally {
+            module._free(pointer);
+          }
+        });
+      }).catch((error) => {
+        document.getElementById('result').value = String(error);
+      });
+    </script>
+  </body>
+</html>
