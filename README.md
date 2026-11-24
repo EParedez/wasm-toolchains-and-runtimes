@@ -1,10 +1,11 @@
 # Practical WebAssembly examples
 
-This repository contains two focused examples for a WebAssembly article:
+This repository contains examples for a two-part WebAssembly article:
 
-1. A Zig WASI module with bounded input, run with **Wasmtime** and **WasmEdge**.
-2. A C function compiled with **Emscripten**, called once per batch from
+1. [Part 1 — Emscripten](emscripten/): a C function called once per batch from
    JavaScript in Node.js or a browser.
+2. [Part 2 — Zig WASI](zig-wasi/): a module with bounded input, run with
+   **Wasmtime** and **WasmEdge**.
 
 These examples demonstrate APIs and portability. They are not performance
 benchmarks or proof that one runtime is faster than another.
@@ -22,7 +23,7 @@ WASI binary's actual size; this project does not assume a fixed size.
 
 ## Zig WASI module: Wasmtime and WasmEdge
 
-`processor.zig` reads up to 32 KiB from standard input, converts ASCII letters
+`zig-wasi/processor.zig` reads up to 32 KiB from standard input, converts ASCII letters
 to uppercase in the same buffer, and writes the result. The processing code
 does not request dynamic memory. The buffer is part of the module's linear
 memory; it does **not** cap either runtime's total memory use.
@@ -30,28 +31,28 @@ memory; it does **not** cap either runtime's total memory use.
 Build the module with Zig 0.13.0:
 
 ```sh
-zig build-exe processor.zig -target wasm32-wasi -O ReleaseSmall
+zig build-exe zig-wasi/processor.zig -target wasm32-wasi -O ReleaseSmall -femit-bin=zig-wasi/processor.wasm
 ```
 
 Run it with Wasmtime 50.0.0:
 
 ```sh
-printf '%s' '{"event": "user_login", "status": "ok"}' | wasmtime run -C cache=n processor.wasm
-python3 tests/integration.py
+printf '%s' '{"event": "user_login", "status": "ok"}' | wasmtime run -C cache=n zig-wasi/processor.wasm
+python3 zig-wasi/tests/integration.py
 ```
 
 Run the same module with WasmEdge 0.18.1:
 
 ```sh
-printf '%s' '{"event": "user_login", "status": "ok"}' | wasmedge processor.wasm
-python3 tests/integration.py --runtime wasmedge
+printf '%s' '{"event": "user_login", "status": "ok"}' | wasmedge zig-wasi/processor.wasm
+python3 zig-wasi/tests/integration.py --runtime wasmedge
 ```
 
 WasmEdge can also compile an AOT artifact for the current host architecture:
 
 ```sh
-wasmedge compile processor.wasm processor-aot.wasm
-python3 tests/integration.py --runtime wasmedge --module processor-aot.wasm --aot
+wasmedge compile zig-wasi/processor.wasm zig-wasi/processor-aot.wasm
+python3 zig-wasi/tests/integration.py --runtime wasmedge --module zig-wasi/processor-aot.wasm --aot
 ```
 
 Expected output for either runtime's `printf` command:

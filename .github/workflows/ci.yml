@@ -1,4 +1,4 @@
-name: Validate WASI example
+name: Validate WebAssembly examples
 
 on:
   push:
@@ -24,9 +24,9 @@ jobs:
           zig version
           wasmtime --version
       - name: Compile WASI module
-        run: zig build-exe processor.zig -target wasm32-wasi -O ReleaseSmall
+        run: zig build-exe zig-wasi/processor.zig -target wasm32-wasi -O ReleaseSmall -femit-bin=zig-wasi/processor.wasm
       - name: Run integration tests
-        run: python3 tests/integration.py
+        run: python3 zig-wasi/tests/integration.py
 
   wasmedge:
     runs-on: ubuntu-24.04
@@ -46,15 +46,15 @@ jobs:
           echo "$RUNNER_TEMP/wasmedge/bin" >> "$GITHUB_PATH"
           echo "LD_LIBRARY_PATH=$RUNNER_TEMP/wasmedge/lib64" >> "$GITHUB_ENV"
       - name: Compile WASI module
-        run: zig build-exe processor.zig -target wasm32-wasi -O ReleaseSmall
+        run: zig build-exe zig-wasi/processor.zig -target wasm32-wasi -O ReleaseSmall -femit-bin=zig-wasi/processor.wasm
       - name: Test WasmEdge interpreter
         run: |
           wasmedge --version
-          python3 tests/integration.py --runtime wasmedge
+          python3 zig-wasi/tests/integration.py --runtime wasmedge
       - name: Compile and test WasmEdge AOT artifact
         run: |
-          wasmedge compile processor.wasm processor-aot.wasm
-          python3 tests/integration.py --runtime wasmedge --module processor-aot.wasm --aot
+          wasmedge compile zig-wasi/processor.wasm zig-wasi/processor-aot.wasm
+          python3 zig-wasi/tests/integration.py --runtime wasmedge --module zig-wasi/processor-aot.wasm --aot
 
   emscripten:
     runs-on: ubuntu-24.04
