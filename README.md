@@ -66,7 +66,7 @@ The limit includes any newline read from `stdin`. An input of 32,768 bytes is
 accepted; 32,769 bytes is rejected with `StreamTooLong`. The transformation
 only affects ASCII letters and does not change non-ASCII Unicode characters.
 
-## Emscripten: one JavaScript-to-Wasm call per batch
+## Emscripten: one processing call per batch
 
 `emscripten/batch.c` exports a function that uppercases a byte buffer. The
 JavaScript examples allocate one contiguous buffer in Wasm memory, copy the
