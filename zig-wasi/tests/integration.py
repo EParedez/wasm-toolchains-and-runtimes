@@ -28,7 +28,7 @@ def run(payload: bytes, runtime: str, module: Path, aot: bool) -> subprocess.Com
 def expect_success(payload: bytes, transformed: bytes, runtime: str, module: Path, aot: bool) -> None:
     result = run(payload, runtime, module, aot)
     expected = (
-        f"Processed {len(payload)} bytes in fixed memory:\n".encode()
+        f"Processed {len(payload)} bytes with a fixed-size buffer:\n".encode()
         + transformed
         + b"\n"
     )
